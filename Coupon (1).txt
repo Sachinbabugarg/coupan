@@ -1,0 +1,313 @@
+package com.capg.pizza.entity;
+
+import java.security.SecureRandom;
+import java.util.List;
+import java.util.Random;
+
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+
+import org.hibernate.annotations.GenericGenerator;
+
+
+/*
+ * @Author : Shambunni
+ * @description : this is used to getter setter method 
+ * 				  for coupon parameters
+ * @Param : It takes couponId,couponName,couponType,couponDiscription,
+ * 			couponPizzaId as parameters 
+ * @Return : It return same parameters 
+ * @createdDate : 26 sep 2022
+ * 
+ * 
+ */
+
+
+
+@Entity
+@Table(name="coupon")
+public class Coupon {
+	
+	
+	@Id
+	@GeneratedValue(strategy=GenerationType.SEQUENCE)
+	@Column(name="coupon_Id")
+	private int couponId;
+	@Column(name="coupon_Name")
+	private String couponName;
+	@Column(name="coupon_type")
+	private String couponType;
+	@Column(name="coupon_desc")
+	private String couponDiscription;
+	@Column(name="couponPizzaId")
+	@GeneratedValue(strategy = GenerationType.AUTO)
+	private int couponPizzaId;
+
+	@ManyToMany(targetEntity = PizzaOrder.class,fetch = FetchType.EAGER)
+	@JoinTable(name = " PizzaCouponId", joinColumns = {@JoinColumn(name = "Booking_Id")},inverseJoinColumns = {@JoinColumn(name="coupon_ID")})
+	private List<PizzaOrder> pizzaOrder;
+	
+	
+	public Coupon(List<PizzaOrder> pizzaOrder) {
+		super();
+		this.pizzaOrder = (List<PizzaOrder>) pizzaOrder;
+	}
+
+	
+	
+	public List<PizzaOrder> getPizzaOrder() {
+		return (List<PizzaOrder>) pizzaOrder;
+	}
+
+
+
+	public void setPizzaOrder(List<PizzaOrder> pizzaOrder) {
+		this.pizzaOrder = pizzaOrder;
+	}
+
+
+
+	public Coupon(int couponId, String couponName, String couponType, String couponDiscription, int couponPizzaId) {
+		super();
+		this.couponId = couponId;
+		this.couponName = couponName;
+		this.couponType = couponType;
+		this.couponDiscription = couponDiscription;
+		this.couponPizzaId = couponPizzaId;
+	}
+	
+	
+	public int getCouponId() {
+		return couponId;
+	}
+	public void setCouponId(int couponId) {
+		this.couponId = couponId;
+	}
+	public String getCouponName() {
+		return couponName;
+	}
+	public void setCouponName(String couponName) {
+		this.couponName = couponName;
+	}
+	public String getCouponType() {
+		return couponType;
+	}
+	public void setCouponType(String couponType) {
+		this.couponType = couponType;
+	}
+	public String getCouponDiscription() {
+		return couponDiscription;
+	}
+	public void setCouponDiscription(String couponDiscription) {
+		this.couponDiscription = couponDiscription;
+	}
+	
+	public int getCouponPizzaId() {
+		return couponPizzaId;
+	}
+	public void setCouponPizzaId(int couponPizzaId) {
+		this.couponPizzaId = couponPizzaId;
+	}
+
+
+	public Coupon() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+
+	
+}
+
+
+
+
+package com.capg.pizza.controller;
+
+import java.util.List;
+
+import javax.transaction.Transactional;
+import javax.validation.Valid;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.capg.pizza.entity.Coupon;
+import com.capg.pizza.entity.PizzaOrder;
+import com.capg.pizza.service.CouponService;
+
+/*
+ * @Author : Shambunni
+ * @description : this is used Mapping
+ * @Param : It takes couponId,coupon as parameters 
+ * @Return : It return same parameters 
+ * @createdDate : 26 sep 2022
+ * 
+ * 
+ */
+
+@RestController
+@RequestMapping(value = "/coupon")
+public class CouponController {
+	
+	@Autowired
+	CouponService couponService;
+	
+	@PostMapping(value="/add")
+	ResponseEntity<Coupon>  addCoupon(@RequestBody Coupon coupon) {
+		Coupon coupon2 = couponService.addCoupons(coupon);
+		
+		return new ResponseEntity<Coupon>(coupon2, HttpStatus.OK);
+	}
+	
+	@GetMapping(value="/view")
+	ResponseEntity<List<Coupon>> viewCoupons(){
+		List<Coupon> coupons = couponService.viewCoupons();
+		
+		return new ResponseEntity<List<Coupon>>(coupons, HttpStatus.OK);
+	}
+	
+	@DeleteMapping(value="delete/{couponId}")
+	ResponseEntity<String> deleteCoupons(@PathVariable int couponId){
+		couponService.deleteCoupons(couponId);
+		
+		return new ResponseEntity<String>("The given Id is Deleted", HttpStatus.OK);
+	}
+	
+	@Transactional
+	@PutMapping(value ="edit/{couponId}")
+	public ResponseEntity<Coupon> editCoupons(@PathVariable Integer couponId ,@Valid @RequestBody Coupon coupon)
+	{
+		return new ResponseEntity<Coupon>(couponService.editCoupons(couponId, coupon),HttpStatus.ACCEPTED);
+	}
+	
+
+}
+
+
+
+
+
+
+package com.capg.pizza.service;
+
+import java.util.List;
+
+import com.capg.pizza.entity.Coupon;
+
+/*
+ * @Author : Shambunni
+ * @description : this is used to coupon service
+ * @createdDate : 26 sep 2022
+ * 
+ * 
+ */
+
+
+public interface CouponService {
+
+	 Coupon addCoupons(Coupon coupon);
+	 Coupon editCoupons(Integer couponId,Coupon coupon );
+	 Coupon deleteCoupons(Integer couponId);
+	 List<Coupon> viewCoupons();
+	 
+}
+
+
+
+
+
+package com.capg.pizza.service;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.capg.pizza.entity.Coupon;
+import com.capg.pizza.exceptions.ResourceNotFoundException;
+import com.capg.pizza.repository.CouponRepository;
+
+/*
+ * @Author : Shambunni
+ * @description : this is used to add,delete,edit,view coupon
+ * @Param : It takes Coupon as paramter 
+ * @Return : It return Coupon 
+ * @createdDate : 26 sep 2022
+ * 
+ * 
+ */
+
+@Service
+public class CouponServiceImpl implements CouponService{
+	
+	@Autowired
+	CouponRepository couponRepository;
+	
+	
+	@Override
+	public List<Coupon> viewCoupons(){
+		return couponRepository.findAll();
+	}
+	
+	@Override
+	public Coupon addCoupons(Coupon coupon) 
+	{
+//		Coupon coupons = new Coupon();
+//		coupons.setCouponId(coupon.getCouponId());
+//		coupons.setCouponType(coupon.getCouponType());
+//		coupons.setCouponName(coupon.getCouponName());
+//		coupons.setCouponDiscription(coupon.getCouponDiscription());
+//		coupons.setCouponPizzaId(coupon.getCouponPizzaId());
+//		
+//		couponRepository.save(coupon);
+		
+		return couponRepository.save(coupon);
+	}
+
+	@Override
+	public Coupon deleteCoupons(Integer couponId) {
+		Optional<Coupon> coupon = couponRepository.findById(couponId);
+		if(coupon.isPresent()) {
+			couponRepository.deleteById(couponId);
+			return null;
+		}
+		else
+			throw new ResourceNotFoundException("Coupon Id is not present to delete");
+		
+	}
+	
+	
+	@Override
+	public Coupon editCoupons(Integer couponId, Coupon coupon) {
+		Coupon coupon2 = couponRepository.findById(couponId).orElseThrow(() -> new ResourceNotFoundException("Coupon does not exist with given Coupon Id: "));
+		coupon2.setCouponType(coupon.getCouponType());
+		coupon2.setCouponName(coupon.getCouponName());
+		coupon2.setCouponDiscription(coupon.getCouponDiscription());
+		
+		return new Coupon();
+	}
+	
+
+}
